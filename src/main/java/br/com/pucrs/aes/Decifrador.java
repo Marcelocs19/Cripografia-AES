@@ -11,36 +11,38 @@ public class Decifrador {
 	
 	private String tipoDeInstancia;
 	
-	private static final String INSTANCIA_CBC = "AES/CBC/PKCS5Padding";
-	
-	private static final String INSTANCIA_CTR = "AES/CTR/NoPadding";
-	
 	public Decifrador(Texto texto) {
 		if(texto.getOperacao().equals("CBC")) {
-			tipoDeInstancia = INSTANCIA_CBC;
+			tipoDeInstancia = "AES/CBC/PKCS5Padding";
 		} 
 		if(texto.getOperacao().equals("CTR")) {
-			tipoDeInstancia = INSTANCIA_CTR;
+			tipoDeInstancia = "AES/CTR/NoPadding";
 		}
 	}
+	
+	public String decodificar(String mensagem, String chave) throws Exception {		
+		IvParameterSpec ivExtraido = getIvMensagemCodificada(converteParaArrayBytes(mensagem));
+		SecretKeySpec chaveSecreta = pegarChaveSecreta(chave);
+		Cipher decodificador = Cipher.getInstance(tipoDeInstancia);
 
-	public static byte[] toByteArray(String s) {
-		return DatatypeConverter.parseHexBinary(s);
+		decodificador.init(Cipher.DECRYPT_MODE, chaveSecreta, ivExtraido);
+		byte[] mensagemDecodificada = decodificador.doFinal(getMensagemCodificadaSemIv(converteParaArrayBytes(mensagem))); 
+		
+		return new String(mensagemDecodificada);
+	}
+
+	public static byte[] converteParaArrayBytes(String mensagem) {
+		return DatatypeConverter.parseHexBinary(mensagem);
 	}
 	
-	public String toHexString(byte[] array) {
-		return DatatypeConverter.printHexBinary(array);
-	}
-	
-	public IvParameterSpec extrairIvDeMensagemCodificada(byte[] mensagemCodificada) {
-
+	public IvParameterSpec getIvMensagemCodificada(byte[] mensagemCodificada) {
 		byte[] iv = new byte[16];
 		System.arraycopy(mensagemCodificada, 0, iv, 0, iv.length);
 
 		return new IvParameterSpec(iv);
 	}
 
-	public byte[] extrairMensagemCodificadaSemIv(byte[] mensagemCodificada) {
+	public byte[] getMensagemCodificadaSemIv(byte[] mensagemCodificada) {
 
 		int tamanhoMensagemCodificadaSemIv = mensagemCodificada.length - 16;
 		byte[] mensagemCodificadaSemIv = new byte[tamanhoMensagemCodificadaSemIv];
@@ -50,22 +52,9 @@ public class Decifrador {
 	}
 
 	public static SecretKeySpec pegarChaveSecreta(String chave) throws Exception {
-		return new SecretKeySpec(toByteArray(chave), "AES");
+		return new SecretKeySpec(converteParaArrayBytes(chave), "AES");
 	}	
 	
-	public String decodificarMensagem(String mensagemCodificada, String chave) throws Exception {
-		
-		byte[] mensagemCodificadaBytes = toByteArray(mensagemCodificada);
 
-		IvParameterSpec ivExtraido = extrairIvDeMensagemCodificada(mensagemCodificadaBytes);
-		SecretKeySpec chaveSecreta = pegarChaveSecreta(chave);
-		byte[] mensagemCodificadaSemIv = extrairMensagemCodificadaSemIv(mensagemCodificadaBytes);
-		Cipher decodificador = Cipher.getInstance(tipoDeInstancia);
-
-		decodificador.init(Cipher.DECRYPT_MODE, chaveSecreta, ivExtraido);
-		byte[] mensagemDecodificada = decodificador.doFinal(mensagemCodificadaSemIv); 
-		
-		return new String(mensagemDecodificada);
-	}
 
 }

@@ -12,20 +12,27 @@ import br.com.pucrs.arquivo.Texto;
 public class Codificador {
 	
 	private String tipoDeInstancia;
-		
-	private static final String INSTANCIA_CBC = "AES/CBC/PKCS5Padding";
-	
-	private static final String INSTANCIA_CTR = "AES/CTR/NoPadding";
 	
 	public Codificador(Texto texto) {
 		if(texto.getOperacao().equals("CBC")) {
-			tipoDeInstancia = INSTANCIA_CBC;
+			tipoDeInstancia = "AES/CBC/PKCS5Padding";
 		}
 		if(texto.getOperacao().equals("CTR")) {
-			tipoDeInstancia = INSTANCIA_CTR;
+			tipoDeInstancia = "AES/CTR/NoPadding";
 		}
 	}
 
+	public String codificar(String mensagem, String chave) throws Exception {		
+		IvParameterSpec ivGerado = gerarIv();
+		SecretKeySpec chaveSecreta = pegarChaveSecreta(chave);
+		Cipher codificador = Cipher.getInstance(tipoDeInstancia);
+		
+		codificador.init(Cipher.ENCRYPT_MODE, chaveSecreta, ivGerado);
+		byte[] mensagemCodificada = codificador.doFinal(converteParaArrayBytes(mensagem));
+		
+		return juntaParteIVComCodificada(mensagemCodificada, ivGerado);		
+	}
+	
 	public IvParameterSpec gerarIv() {
 		byte[] iv = new byte[16];
 		SecureRandom random = new SecureRandom();
@@ -34,32 +41,19 @@ public class Codificador {
 		return new IvParameterSpec(iv);
 	}
 	
-	public static byte[] toByteArray(String s) {
-		return DatatypeConverter.parseHexBinary(s);
+	public static byte[] converteParaArrayBytes(String mensagem) {
+		return DatatypeConverter.parseHexBinary(mensagem);
 	}
 	
-	public String toHexString(byte[] array) {
+	public String converteHexadecimalParaString(byte[] array) {
 		return DatatypeConverter.printHexBinary(array);
 	}
 	
 	public static SecretKeySpec pegarChaveSecreta(String chave) throws Exception {
-		return new SecretKeySpec(toByteArray(chave), "AES");
+		return new SecretKeySpec(converteParaArrayBytes(chave), "AES");
 	}
 	
-	public String encriptarMensagem(String mensagem, String chave) throws Exception {
-		
-		byte[] mensagemBytes = toByteArray(mensagem);
-		IvParameterSpec ivGerado = gerarIv();
-		SecretKeySpec chaveSecreta = pegarChaveSecreta(chave);
-		Cipher codificador = Cipher.getInstance(tipoDeInstancia);
-		
-		codificador.init(Cipher.ENCRYPT_MODE, chaveSecreta, ivGerado);
-		byte[] mensagemCodificada = codificador.doFinal(mensagemBytes);
-		
-		return combinarIVComParteEncriptada(mensagemCodificada, ivGerado);		
-	}
-
-	private String combinarIVComParteEncriptada(byte[] mensagemCodificada, IvParameterSpec ivGerado) {		
-		return toHexString(ivGerado.getIV()) + toHexString(mensagemCodificada);
+	private String juntaParteIVComCodificada(byte[] mensagemCodificada, IvParameterSpec ivGerado) {		
+		return converteHexadecimalParaString(ivGerado.getIV()) + converteHexadecimalParaString(mensagemCodificada);
 	}
 }

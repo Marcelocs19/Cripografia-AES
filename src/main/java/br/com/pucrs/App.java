@@ -12,9 +12,8 @@ public class App {
 		try (Scanner teclado = new Scanner(System.in)) {
 
 			LeituraTxt leitura = new LeituraTxt();
-
-			System.out.println("Digite o no do arquivo txt: ");
-
+			
+			System.out.println("Digite o nome do arquivo: ");
 			String nomeArquivo = teclado.nextLine();
 
 			Texto texto = leitura.leitura(nomeArquivo);
@@ -24,13 +23,13 @@ public class App {
 			Decifrador decifrador = new Decifrador(texto);
 
 			if(texto.getTipo().equals("Ciphertext")) {
-				System.out.println("Mensagem decifrada: " + decifrador.decodificarMensagem(texto.getBloco(), texto.getChave()));
+				System.out.println("Mensagem decifrada: " + decifrador.decodificar(texto.getBloco(), texto.getChave()));
 			}
 			if(texto.getTipo().equals("Plaintext")) {
-				String encriptarMensagem = codificador.encriptarMensagem(texto.getBloco(), texto.getChave());
+				String encriptarMensagem = codificador.codificar(texto.getBloco(), texto.getChave());
 				System.out.println("Mensagem encriptada: " + encriptarMensagem);
 				
-				String decodificarMensagem = decifrador.decodificarMensagem(encriptarMensagem, texto.getChave());
+				String decodificarMensagem = decifrador.decodificar(encriptarMensagem, texto.getChave());
 				System.out.println("Mensagem decifrada: " + decodificarMensagem);
 			}
 
